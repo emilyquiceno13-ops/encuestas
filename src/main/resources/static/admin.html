@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Panel de Administrador</title>
+<style>
+  * { box-sizing: border-box; }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+    background: #f4f6fb;
+    color: #2d2d2d;
+  }
+  .header {
+    background: linear-gradient(120deg, #6a5cf5, #a855f7, #ec4899, #6a5cf5);
+    background-size: 300% 300%;
+    animation: gradientShift 10s ease infinite;
+    color: white;
+    padding: 40px 30px;
+    border-radius: 0 0 26px 26px;
+    margin: 0 -20px 30px;
+    box-shadow: 0 8px 25px rgba(106, 92, 245, 0.35);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .header h1 { margin: 0; font-size: 27px; }
+  .header p { margin: 6px 0 0; opacity: 0.92; font-size: 14px; }
+  .header button {
+    background: rgba(255,255,255,0.2);
+    border: 1.5px solid rgba(255,255,255,0.6);
+    color: white;
+    padding: 9px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .header button:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+  .encuesta {
+    background: white;
+    border-radius: 16px;
+    padding: 20px 22px;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 30px rgba(106,92,245,0.1);
+    animation: fadeInUp 0.4s ease both;
+  }
+  .encuesta h3 { margin: 0 0 6px; color: #333; }
+  .encuesta p { color: #777; font-size: 14px; margin: 0 0 10px; }
+  .encuesta ul { margin: 0 0 14px; padding-left: 20px; color: #555; font-size: 14px; }
+  button.accion {
+    background: linear-gradient(120deg, #6a5cf5, #a855f7);
+    color: white;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    margin-right: 8px;
+    box-shadow: 0 4px 12px rgba(106,92,245,0.25);
+    transition: transform 0.15s, box-shadow 0.2s;
+  }
+  button.accion:hover { transform: translateY(-2px); }
+  button.secundario { background: linear-gradient(120deg, #e94b6b, #ff7a90); box-shadow: 0 4px 12px rgba(233,75,107,0.25); }
+  button.terciario { background: linear-gradient(120deg, #2fb787, #4ee2ac); box-shadow: 0 4px 12px rgba(47,183,135,0.25); }
+  .vacio { text-align: center; color: #999; padding: 30px 0; font-style: italic; }
+  a { text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🔐 Panel de Administrador</h1>
+    <p>Todas las encuestas creadas en la plataforma</p>
+  </div>
+  <button onclick="cerrarSesion()">Cerrar sesión</button>
+</div>
+
+<div id="listaEncuestas" class="vacio">Cargando...</div>
+
+<script>
+if (sessionStorage.getItem('logueado') !== 'si') {
+    window.location.href = 'login.html';
+}
+
+function cerrarSesion() {
+    sessionStorage.removeItem('logueado');
+    window.location.href = 'login.html';
+}
+
+async function cargarEncuestas() {
+    const respuesta = await fetch('/api/encuestas');
+    const encuestas = await respuesta.json();
+
+    const contenedor = document.getElementById('listaEncuestas');
+    if (encuestas.length === 0) {
+        contenedor.className = 'vacio';
+        contenedor.innerHTML = 'No hay encuestas todavía.';
+        return;
+    }
+
+    contenedor.className = '';
+    contenedor.innerHTML = '';
+    encuestas.forEach(enc => {
+        const div = document.createElement('div');
+        div.className = 'encuesta';
+        let preguntasHtml = '';
+        enc.preguntas.forEach(p => {
+            preguntasHtml += `<li>${p.texto} <em>(${p.tipo})</em></li>`;
+        });
+        div.innerHTML = `
+            <h3>${enc.titulo}</h3>
+            <p>${enc.descripcion || ''}</p>
+            <ul>${preguntasHtml}</ul>
+            <a href="responder.html?id=${enc.id}"><button class="accion">📝 Ver formulario</button></a>
+            <a href="resultados.html?id=${enc.id}"><button class="accion terciario">📊 Ver resultados</button></a>
+            <button class="accion secundario" onclick="eliminarEncuesta(${enc.id})">🗑️ Eliminar</button>
+        `;
+        contenedor.appendChild(div);
+    });
+}
+
+async function eliminarEncuesta(id) {
+    await fetch('/api/encuestas/' + id, { method: 'DELETE' });
+    cargarEncuestas();
+}
+
+cargarEncuestas();
+</script>
+
+</body>
+</html>

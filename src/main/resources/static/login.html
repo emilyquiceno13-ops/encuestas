@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Iniciar sesión</title>
+<style>
+  * { box-sizing: border-box; }
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(120deg, #6a5cf5, #a855f7, #ec4899, #6a5cf5);
+    background-size: 300% 300%;
+    animation: gradientShift 10s ease infinite;
+    height: 100vh;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px 34px;
+    width: 320px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+    animation: fadeInUp 0.5s ease both;
+  }
+  h1 { margin: 0 0 22px; font-size: 22px; color: #333; text-align: center; }
+  label { display: block; font-size: 13px; font-weight: 600; color: #555; margin: 14px 0 6px; }
+  input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid #e0e0e6;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus {
+    outline: none;
+    border-color: #a855f7;
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+  }
+  button {
+    width: 100%;
+    background: linear-gradient(120deg, #6a5cf5, #a855f7);
+    color: white;
+    border: none;
+    padding: 13px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 22px;
+    box-shadow: 0 4px 14px rgba(106,92,245,0.3);
+    transition: transform 0.15s, box-shadow 0.2s;
+  }
+  button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(106,92,245,0.4); }
+  button:active { transform: scale(0.97); }
+  .error { color: #e94b6b; font-size: 13px; margin-top: 10px; text-align: center; display: none; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>🔐 Panel de Administrador</h1>
+  <label>Usuario</label>
+  <input type="text" id="usuario" placeholder="Usuario">
+  <label>Contraseña</label>
+  <input type="password" id="clave" placeholder="Contraseña">
+  <button onclick="iniciarSesion()">Entrar</button>
+  <p class="error" id="mensajeError">Usuario o contraseña incorrectos</p>
+</div>
+
+<script>
+const USUARIO_CORRECTO = 'admin';
+const CLAVE_CORRECTA = 'encuestas123';
+
+function iniciarSesion() {
+    const usuario = document.getElementById('usuario').value;
+    const clave = document.getElementById('clave').value;
+
+    if (usuario === USUARIO_CORRECTO && clave === CLAVE_CORRECTA) {
+        sessionStorage.setItem('logueado', 'si');
+        window.location.href = 'admin.html';
+    } else {
+        document.getElementById('mensajeError').style.display = 'block';
+    }
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') iniciarSesion();
+});
+</script>
+
+</body>
+</html>

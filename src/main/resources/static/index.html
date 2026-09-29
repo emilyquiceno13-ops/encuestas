@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Mis Encuestas</title>
+<style>
+  * { box-sizing: border-box; }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+    background: #f4f6fb;
+    color: #2d2d2d;
+  }
+  .header {
+    background: linear-gradient(120deg, #6a5cf5, #a855f7, #ec4899, #6a5cf5);
+    background-size: 300% 300%;
+    animation: gradientShift 10s ease infinite;
+    color: white;
+    padding: 46px 30px;
+    border-radius: 0 0 26px 26px;
+    margin: 0 -20px 30px;
+    box-shadow: 0 8px 25px rgba(106, 92, 245, 0.35);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .header h1 { margin: 0; font-size: 30px; display: flex; align-items: center; gap: 10px; }
+  .header p { margin: 8px 0 0; opacity: 0.92; font-size: 14px; }
+  .header a.admin {
+    color: white;
+    opacity: 0.85;
+    font-size: 12px;
+    text-decoration: none;
+    border: 1.5px solid rgba(255,255,255,0.6);
+    padding: 8px 14px;
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .header a.admin:hover { opacity: 1; background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+  .card {
+    background: white;
+    border-radius: 18px;
+    padding: 26px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 35px rgba(106,92,245,0.1);
+    animation: fadeInUp 0.5s ease both;
+  }
+  .card h2 { margin-top: 0; font-size: 19px; color: #4b3fd6; display: flex; align-items: center; gap: 8px; }
+  label { display: block; font-weight: 600; font-size: 13px; color: #555; margin: 14px 0 6px; }
+  input[type="text"], textarea, select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid #e0e0e6;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input[type="text"]:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: #a855f7;
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+  }
+  .pregunta-form {
+    border: 1.5px dashed #d3cef8;
+    background: #faf9ff;
+    border-radius: 14px;
+    padding: 16px;
+    margin-top: 14px;
+    animation: fadeInUp 0.35s ease both;
+  }
+  button {
+    background: linear-gradient(120deg, #6a5cf5, #a855f7);
+    color: white;
+    border: none;
+    padding: 11px 22px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 10px;
+    margin-right: 8px;
+    transition: transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 14px rgba(106,92,245,0.3);
+  }
+  button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(106,92,245,0.4); }
+  button:active { transform: scale(0.97); }
+  button.outline {
+    background: white;
+    color: #6a5cf5;
+    border: 1.5px solid #6a5cf5;
+    box-shadow: none;
+  }
+  button.outline:hover { background: #f0edff; box-shadow: 0 4px 14px rgba(106,92,245,0.15); }
+  .enlace-caja {
+    background: linear-gradient(120deg, #eef0ff, #fdeeff);
+    border: 1.5px solid #d3cef8;
+    border-radius: 14px;
+    padding: 16px;
+    margin-top: 18px;
+    display: none;
+    animation: fadeInUp 0.4s ease both;
+  }
+  .enlace-caja p { margin: 0 0 8px; font-size: 13px; color: #555; font-weight: 600; }
+  .enlace-caja input {
+    width: 100%;
+    padding: 9px 11px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 13px;
+    background: white;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>📋 Crear Encuesta</h1>
+    <p>Crea tu encuesta y comparte el link para que la respondan ✨</p>
+  </div>
+  <a class="admin" href="login.html">🔐 Admin</a>
+</div>
+
+<div class="card">
+  <h2>✏️ Crear nueva encuesta</h2>
+
+  <label>Título</label>
+  <input type="text" id="titulo" placeholder="Ej: Encuesta de satisfacción">
+
+  <label>Descripción</label>
+  <textarea id="descripcion" rows="2" placeholder="Descripción opcional"></textarea>
+
+  <div id="preguntasContainer"></div>
+
+  <button class="outline" onclick="agregarPregunta()">➕ Agregar pregunta</button>
+  <br>
+  <button onclick="guardarEncuesta()">🚀 Guardar y obtener link</button>
+
+  <div class="enlace-caja" id="cajaEnlace">
+    <p>✅ ¡Encuesta creada! Comparte este link para que la respondan:</p>
+    <input type="text" id="enlaceGenerado" readonly onclick="this.select()">
+  </div>
+</div>
+
+<script>
+let contadorPreguntas = 0;
+
+function agregarPregunta() {
+    contadorPreguntas++;
+    const div = document.createElement('div');
+    div.className = 'pregunta-form';
+    div.id = 'pregunta-' + contadorPreguntas;
+    div.innerHTML = `
+        <label>Texto de la pregunta</label>
+        <input type="text" class="pregunta-texto" placeholder="Ej: ¿Qué opinas de...?">
+        <label>Tipo</label>
+        <select class="pregunta-tipo" onchange="mostrarOpciones(${contadorPreguntas}, this.value)">
+            <option value="TEXTO">Respuesta libre (texto)</option>
+            <option value="OPCION_MULTIPLE">Opción múltiple</option>
+        </select>
+        <div class="opciones-container" id="opciones-${contadorPreguntas}"></div>
+    `;
+    document.getElementById('preguntasContainer').appendChild(div);
+}
+
+function mostrarOpciones(id, tipo) {
+    const cont = document.getElementById('opciones-' + id);
+    if (tipo === 'OPCION_MULTIPLE') {
+        cont.innerHTML = `<label>Opciones (separadas por coma)</label>
+            <input type="text" class="pregunta-opciones" placeholder="Ej: Sí, No, Tal vez">`;
+    } else {
+        cont.innerHTML = '';
+    }
+}
+
+async function guardarEncuesta() {
+    const titulo = document.getElementById('titulo').value;
+    const descripcion = document.getElementById('descripcion').value;
+
+    if (!titulo) {
+        alert('El título es obligatorio');
+        return;
+    }
+
+    const preguntasDivs = document.querySelectorAll('.pregunta-form');
+    const preguntas = [];
+
+    preguntasDivs.forEach(div => {
+        const texto = div.querySelector('.pregunta-texto').value;
+        const tipo = div.querySelector('.pregunta-tipo').value;
+        let opciones = [];
+        const opcionesInput = div.querySelector('.pregunta-opciones');
+        if (opcionesInput && opcionesInput.value) {
+            opciones = opcionesInput.value.split(',').map(o => o.trim());
+        }
+        preguntas.push({ texto, tipo, opciones });
+    });
+
+    const encuesta = { titulo, descripcion, preguntas };
+
+    const respuesta = await fetch('/api/encuestas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(encuesta)
+    });
+
+    if (respuesta.ok) {
+        const creada = await respuesta.json();
+        const enlace = window.location.origin + '/responder.html?id=' + creada.id;
+        document.getElementById('enlaceGenerado').value = enlace;
+        document.getElementById('cajaEnlace').style.display = 'block';
+
+        document.getElementById('titulo').value = '';
+        document.getElementById('descripcion').value = '';
+        document.getElementById('preguntasContainer').innerHTML = '';
+    } else {
+        alert('Error al guardar la encuesta');
+    }
+}
+</script>
+
+</body>
+</html>

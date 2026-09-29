@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Responder Encuesta</title>
+<style>
+  * { box-sizing: border-box; }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+    background: #f4f6fb;
+    color: #2d2d2d;
+  }
+  .header {
+    background: linear-gradient(120deg, #6a5cf5, #a855f7, #ec4899, #6a5cf5);
+    background-size: 300% 300%;
+    animation: gradientShift 10s ease infinite;
+    color: white;
+    padding: 32px 30px;
+    border-radius: 0 0 26px 26px;
+    margin: 0 -20px 30px;
+    box-shadow: 0 8px 25px rgba(106, 92, 245, 0.35);
+  }
+  .header a {
+    color: white;
+    opacity: 0.85;
+    font-size: 13px;
+    text-decoration: none;
+  }
+  .header a:hover { opacity: 1; }
+  .header h1 { margin: 12px 0 0; font-size: 25px; }
+  .header p { margin: 6px 0 0; opacity: 0.92; font-size: 14px; }
+  .pregunta {
+    background: white;
+    border-radius: 16px;
+    padding: 20px 22px;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 30px rgba(106,92,245,0.1);
+    animation: fadeInUp 0.4s ease both;
+  }
+  .pregunta label strong {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 15px;
+    color: #333;
+  }
+  .pregunta label strong::before { content: '❓'; font-size: 14px; }
+  .opcion-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+    border: 1.5px solid transparent;
+  }
+  .opcion-label:hover { background: #f4f2ff; border-color: #d3cef8; }
+  input[type="text"] {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid #e0e0e6;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input[type="text"]:focus {
+    outline: none;
+    border-color: #a855f7;
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+  }
+  button {
+    background: linear-gradient(120deg, #6a5cf5, #a855f7);
+    color: white;
+    border: none;
+    padding: 13px 26px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    margin-top: 10px;
+    box-shadow: 0 4px 14px rgba(106,92,245,0.3);
+    transition: transform 0.15s, box-shadow 0.2s;
+  }
+  button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(106,92,245,0.4); }
+  button:active { transform: scale(0.97); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <a href="index.html">&larr; Volver</a>
+  <h1 id="tituloEncuesta">Cargando...</h1>
+  <p id="descripcionEncuesta"></p>
+</div>
+
+<div id="preguntasContainer"></div>
+
+<button onclick="enviarRespuestas()">✅ Enviar respuestas</button>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const encuestaId = params.get('id');
+
+let preguntasActuales = [];
+
+async function cargarEncuesta() {
+    const respuesta = await fetch('/api/encuestas/' + encuestaId);
+    const encuesta = await respuesta.json();
+
+    document.getElementById('tituloEncuesta').innerText = encuesta.titulo;
+    document.getElementById('descripcionEncuesta').innerText = encuesta.descripcion || '';
+
+    preguntasActuales = encuesta.preguntas;
+
+    const contenedor = document.getElementById('preguntasContainer');
+    contenedor.innerHTML = '';
+
+    encuesta.preguntas.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'pregunta';
+        div.id = 'respuesta-pregunta-' + p.id;
+
+        let camposHtml = '';
+        if (p.tipo === 'OPCION_MULTIPLE') {
+            p.opciones.forEach(op => {
+                camposHtml += `
+                    <label class="opcion-label">
+                        <input type="radio" name="pregunta-${p.id}" value="${op}">
+                        ${op}
+                    </label>
+                `;
+            });
+        } else {
+            camposHtml = `<input type="text" class="respuesta-texto" placeholder="Tu respuesta">`;
+        }
+
+        div.innerHTML = `<label><strong>${p.texto}</strong></label>${camposHtml}`;
+        contenedor.appendChild(div);
+    });
+}
+
+async function enviarRespuestas() {
+    const promesas = [];
+
+    preguntasActuales.forEach(p => {
+        const div = document.getElementById('respuesta-pregunta-' + p.id);
+        let contenido = '';
+
+        if (p.tipo === 'OPCION_MULTIPLE') {
+            const seleccionado = div.querySelector('input[type="radio"]:checked');
+            contenido = seleccionado ? seleccionado.value : '';
+        } else {
+            contenido = div.querySelector('.respuesta-texto').value;
+        }
+
+        if (contenido) {
+            const respuesta = {
+                contenido: contenido,
+                pregunta: { id: p.id }
+            };
+            promesas.push(
+                fetch('/api/respuestas', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(respuesta)
+                })
+            );
+        }
+    });
+
+    await Promise.all(promesas);
+    alert('¡Gracias por responder!');
+    window.location.href = 'index.html';
+}
+
+cargarEncuesta();
+</script>
+
+</body>
+</html>

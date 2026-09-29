@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Resultados</title>
+<style>
+  * { box-sizing: border-box; }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @keyframes growBar {
+    from { width: 0%; }
+  }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+    background: #f4f6fb;
+    color: #2d2d2d;
+  }
+  .header {
+    background: linear-gradient(120deg, #6a5cf5, #a855f7, #ec4899, #6a5cf5);
+    background-size: 300% 300%;
+    animation: gradientShift 10s ease infinite;
+    color: white;
+    padding: 32px 30px;
+    border-radius: 0 0 26px 26px;
+    margin: 0 -20px 30px;
+    box-shadow: 0 8px 25px rgba(106, 92, 245, 0.35);
+  }
+  .header a { color: white; opacity: 0.85; font-size: 13px; text-decoration: none; }
+  .header a:hover { opacity: 1; }
+  .header h1 { margin: 10px 0 0; font-size: 25px; }
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 22px;
+    margin-bottom: 18px;
+    box-shadow: 0 8px 30px rgba(106,92,245,0.1);
+    animation: fadeInUp 0.4s ease both;
+  }
+  .card h3 { margin: 0 0 4px; color: #333; display: flex; align-items: center; gap: 8px; }
+  .card h3::before { content: '❓'; font-size: 14px; }
+  .total { font-size: 13px; color: #888; margin-bottom: 12px; }
+  .barra-fondo {
+    background: #eee;
+    border-radius: 8px;
+    height: 24px;
+    margin: 6px 0;
+    overflow: hidden;
+    position: relative;
+  }
+  .barra-relleno {
+    background: linear-gradient(120deg, #6a5cf5, #a855f7);
+    height: 100%;
+    border-radius: 8px;
+    animation: growBar 0.8s ease;
+  }
+  .barra-texto {
+    position: absolute;
+    left: 10px;
+    top: 3px;
+    font-size: 12px;
+    color: #333;
+    font-weight: 600;
+  }
+  .respuesta-texto-item {
+    background: #faf9ff;
+    border-left: 4px solid #a855f7;
+    padding: 9px 14px;
+    margin: 6px 0;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .vacio { color: #999; font-style: italic; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <a href="admin.html">&larr; Volver</a>
+  <h1 id="tituloEncuesta">📊 Cargando resultados...</h1>
+</div>
+
+<div id="contenedor"></div>
+
+<script>
+if (sessionStorage.getItem('logueado') !== 'si') {
+    window.location.href = 'login.html';
+}
+
+const params = new URLSearchParams(window.location.search);
+const encuestaId = params.get('id');
+
+async function cargarResultados() {
+    const respEncuesta = await fetch('/api/encuestas/' + encuestaId);
+    const encuesta = await respEncuesta.json();
+    document.getElementById('tituloEncuesta').innerText = '📊 Resultados: ' + encuesta.titulo;
+
+    const contenedor = document.getElementById('contenedor');
+    contenedor.innerHTML = '';
+
+    for (const p of encuesta.preguntas) {
+        const respRespuestas = await fetch('/api/respuestas/pregunta/' + p.id);
+        const respuestas = await respRespuestas.json();
+
+        const div = document.createElement('div');
+        div.className = 'card';
+
+        let contenidoHtml = '';
+
+        if (respuestas.length === 0) {
+            contenidoHtml = '<p class="vacio">Todavía nadie ha respondido esta pregunta.</p>';
+        } else if (p.tipo === 'OPCION_MULTIPLE') {
+            const conteos = {};
+            p.opciones.forEach(op => conteos[op] = 0);
+            respuestas.forEach(r => {
+                if (conteos[r.contenido] !== undefined) conteos[r.contenido]++;
+            });
+            const total = respuestas.length;
+            p.opciones.forEach(op => {
+                const cantidad = conteos[op];
+                const porcentaje = total > 0 ? Math.round((cantidad / total) * 100) : 0;
+                contenidoHtml += `
+                    <div>${op} — ${cantidad} voto(s)</div>
+                    <div class="barra-fondo">
+                        <div class="barra-relleno" style="width:${porcentaje}%"></div>
+                        <div class="barra-texto">${porcentaje}%</div>
+                    </div>
+                `;
+            });
+        } else {
+            respuestas.forEach(r => {
+                contenidoHtml += `<div class="respuesta-texto-item">${r.contenido}</div>`;
+            });
+        }
+
+        div.innerHTML = `
+            <h3>${p.texto}</h3>
+            <div class="total">${respuestas.length} respuesta(s) en total</div>
+            ${contenidoHtml}
+        `;
+        contenedor.appendChild(div);
+    }
+}
+
+cargarResultados();
+</script>
+
+</body>
+</html>
